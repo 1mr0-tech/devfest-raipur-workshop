@@ -41,7 +41,7 @@ make status    # 2x web, 1x cart, all Running
 ```sh
 make break-1                          # typo in the web image tag
 kubectl --context k3d-sre-lab -n shop get pods
-kubectl --context k3d-sre-lab -n shop describe pod -l app=web | tail -25
+kubectl --context k3d-sre-lab -n shop describe pod $(kubectl --context k3d-sre-lab -n shop get pods --no-headers | awk '$2=="0/1"{print $1; exit}') | tail -12
 make fix-1
 ```
 Find the cause using only kubectl. Notice how many commands it takes.
@@ -101,7 +101,27 @@ Print the contents of every Secret.
 | Human approval | Gemini's tool-call prompt | Hard, if you read before clicking |
 | Read-only mode / RBAC | `read_only`, `make rbac` | Hard. Enforced by the server or the cluster |
 
+See the guardrails without the model, which also works if the API is down:
+```sh
+make mcp-check
+```
+It starts the same MCP server Gemini uses and proves: dangerous tools are not offered, Secrets are denied, and your other clusters are unreachable (the agent gets a kubeconfig containing only `sre-lab`).
+
 Optional stretch: `make rbac` creates a real read-only Kubernetes identity and proves it cannot delete.
+
+### Lab 5 (bonus, if time allows): no logs, then a postmortem
+```sh
+make agent-write      # restart gemini
+make break-3          # the report service is switched to a memory-hungry mode
+```
+```
+The report service is unhealthy. Find the root cause. Note there may be no logs: check the pod status.
+```
+This one leaves no log line. The evidence is `OOMKilled`, exit code 137, in the pod status. After `make fix-3`, ask for the last deliverable of an on-call engineer:
+```
+Using only evidence from the shop namespace (events, pod status, logs), write a short incident postmortem covering everything that broke today: timeline, root cause, fix, and one prevention step for each. Say where evidence is missing.
+```
+Check the agent's claims against the cluster. That is the "verify" half of trust, but verify.
 
 ## Stuck?
 
@@ -112,6 +132,7 @@ Optional stretch: `make rbac` creates a real read-only Kubernetes identity and p
 | Auth or 429 errors | Re-export `GEMINI_API_KEY` in this terminal, or wait a minute. Use `make fix-1` / `make fix-2` to continue manually |
 | Mac went to sleep mid-lab | `make awake` in a spare terminal, then `make status` |
 | Want a clean slate | `make reset` |
+| `make mcp-check` fails | Run `make agent-ro` (or `agent-write`) first and make sure `make up` finished |
 
 ## Teardown
 ```sh

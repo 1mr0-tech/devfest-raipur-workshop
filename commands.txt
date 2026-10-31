@@ -5,8 +5,8 @@
  Explanations: private/knowledge.md (local only) and README.md
 =====================================================================
 
-# Shortcut used below
-K="kubectl --context k3d-sre-lab"
+# Shortcut used below: "k" = kubectl pinned to the lab cluster (works in zsh and bash)
+k() { kubectl --context k3d-sre-lab "$@"; }
 
 
 ---------------------------------------------------------------------
@@ -51,7 +51,7 @@ k3d cluster start sre-lab                    # only if it shows 0/2 servers runn
 ---------------------------------------------------------------------
 make up
 make status
-$K get nodes
+k get nodes
 
 
 ---------------------------------------------------------------------
@@ -59,13 +59,15 @@ $K get nodes
 ---------------------------------------------------------------------
 make break-1
 
-$K -n shop get pods
-$K -n shop get pods -w                       # Ctrl+C to stop
-$K -n shop describe pod -l app=web | tail -25
-$K -n shop get events --sort-by=.lastTimestamp | tail -10
+k -n shop get pods
+k -n shop get pods -w                       # Ctrl+C to stop
+# describe the pod that is NOT ready (0/1):
+k -n shop describe pod $(k -n shop get pods --no-headers | awk '$2=="0/1"{print $1; exit}') | tail -12
+k -n shop get events --field-selector type=Warning
+k -n shop get events --sort-by=.lastTimestamp | tail -10
 
 make fix-1
-$K -n shop rollout status deploy/web
+k -n shop rollout status deploy/web
 
 
 ---------------------------------------------------------------------
@@ -109,12 +111,12 @@ make agent-write
 #   Propose a fix for the cart crash loop. Show the exact change first. Do not apply it until I say yes.
 
 # YOU run the dry-run before approving (nothing changes)
-$K -n shop set env deploy/cart DB_HOST=postgres.shop.svc.cluster.local --dry-run=server -o jsonpath='{.spec.template.spec.containers[0].env}'
+k -n shop set env deploy/cart DB_HOST=postgres.shop.svc.cluster.local --dry-run=server -o jsonpath='{.spec.template.spec.containers[0].env}'
 
 #   Yes, apply it.        (approve the tool call when prompted)
 
 make status
-$K -n shop logs -l app=cart --tail=3
+k -n shop logs -l app=cart --tail=3 --prefix   # an old pod's last line may also show
 
 # Manual equivalent if Gemini is rate-limited
 make fix-2
@@ -130,9 +132,32 @@ make fix-2
 # Ask: which layer stopped each?
 #   GEMINI.md (soft) | disabled_tools (tool not offered) | approval prompt | read_only / RBAC
 
+# See the guardrails WITHOUT the model (works with no API key; also a fallback demo)
+make mcp-check
+
 # Optional: a real read-only Kubernetes identity
 make rbac
 #   expect: list pods yes / delete pods no / delete in kube-system no
+
+
+---------------------------------------------------------------------
+ LAB 5 - BONUS: NO LOG LINE + AGENT-WRITTEN POSTMORTEM
+---------------------------------------------------------------------
+make agent-write      # then restart gemini
+make break-3
+make status           # report-... shows OOMKilled
+
+#   The report service is unhealthy. Find the root cause. Note there may be no logs: check the pod status.
+#   (expected: OOMKilled, exit code 137, 64Mi memory limit, MODE=full)
+
+# Manual evidence
+k -n shop get pod -l app=report -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[0].lastState.terminated.reason}{"\n"}{end}'
+
+# Fix: ask the agent to propose it, or by hand
+make fix-3
+
+# Postmortem from the evidence (slide 39: agents draft their own postmortems)
+#   Using only evidence from the shop namespace (events, pod status, logs), write a short incident postmortem covering everything that broke today: timeline, root cause, fix, and one prevention step for each. Say where evidence is missing.
 
 
 ---------------------------------------------------------------------
