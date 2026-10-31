@@ -1,0 +1,10 @@
+# Personal prep notes - never commit
+private/
+
+# Source deck (130 MB)
+*.pptx
+
+# Local lab artifacts
+.gemini/
+agent-reader.kubeconfig
+*.kubeconfig

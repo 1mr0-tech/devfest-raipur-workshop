@@ -1,0 +1,8 @@
+# Agent profile 2: can change things, but the dangerous tools are not offered at all.
+toolsets = ["core"]
+disabled_tools = ["resources_delete", "pods_delete", "pods_exec", "pods_run"]
+
+[[denied_resources]]
+group = ""
+version = "v1"
+kind = "Secret"

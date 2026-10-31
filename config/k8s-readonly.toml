@@ -1,0 +1,10 @@
+# Agent profile 1: READ-ONLY. The MCP server only exposes tools marked read-only
+# (pods_list, pods_log, events_list, resources_get ...). Writes cannot be requested.
+read_only = true
+toolsets = ["core"]
+
+# Even read-only agents should not read Secrets.
+[[denied_resources]]
+group = ""
+version = "v1"
+kind = "Secret"
