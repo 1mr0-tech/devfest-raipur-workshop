@@ -1,0 +1,27 @@
+{
+  "name": "devfest-raipur-workshop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI-assisted SRE workshop: k3d + Gemini CLI + Kubernetes MCP",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "help": "node scripts/lab.mjs help",
+    "preflight": "node scripts/lab.mjs preflight",
+    "up": "node scripts/lab.mjs up",
+    "down": "node scripts/lab.mjs down",
+    "status": "node scripts/lab.mjs status",
+    "reset": "node scripts/lab.mjs reset",
+    "break-1": "node scripts/lab.mjs break-1",
+    "break-2": "node scripts/lab.mjs break-2",
+    "break-3": "node scripts/lab.mjs break-3",
+    "fix-1": "node scripts/lab.mjs fix-1",
+    "fix-2": "node scripts/lab.mjs fix-2",
+    "fix-3": "node scripts/lab.mjs fix-3",
+    "agent-ro": "node scripts/lab.mjs agent-ro",
+    "agent-write": "node scripts/lab.mjs agent-write",
+    "mcp-check": "node scripts/lab.mjs mcp-check",
+    "rbac": "node scripts/lab.mjs rbac",
+    "awake": "node scripts/lab.mjs awake"
+  }
+}

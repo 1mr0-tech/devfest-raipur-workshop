@@ -1,0 +1,67 @@
+name: lab
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Full lab end to end on a real Linux Docker host.
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install k3d
+        run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+      - name: Install Gemini CLI
+        run: npm install -g @google/gemini-cli
+      - name: Pre-flight (everything except the API key must pass)
+        run: |
+          node scripts/lab.mjs preflight | tee preflight.txt || true
+          grep -E "PASS  (Docker|k3d|kubectl|node|gemini|kubernetes-mcp)" preflight.txt | wc -l | grep -qx 6
+      - run: npm run up
+      - name: Faults appear and fixes work
+        run: |
+          npm run break-1 && npm run break-2 && npm run break-3
+          sleep 40
+          kubectl --context k3d-sre-lab -n shop get pods
+          kubectl --context k3d-sre-lab -n shop get pods | grep -E "ImagePullBackOff|ErrImagePull"
+          kubectl --context k3d-sre-lab -n shop get pods | grep -E "OOMKilled|CrashLoopBackOff"
+          npm run fix-1 && npm run fix-2 && npm run fix-3
+          npm run reset
+      - name: Agent tool layer, read-only profile
+        run: npm run agent-ro && npm run mcp-check
+      - name: Agent tool layer, write profile
+        run: npm run agent-write && npm run mcp-check
+      - name: RBAC identity cannot delete
+        run: |
+          npm run rbac | tee rbac.txt
+          grep "list pods -n shop.*yes" rbac.txt
+          grep "delete pods -n shop .*no" rbac.txt
+          grep "delete pods -n kube-system.*no" rbac.txt
+      - run: npm run down
+
+  # No Linux containers on Windows runners, so no cluster here. This checks the
+  # parts that differ on Windows: .cmd shims for npx/gemini and the script itself.
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node --check scripts/lab.mjs
+      - run: npm run help
+      - name: Install Gemini CLI
+        run: npm install -g @google/gemini-cli
+      - name: Pre-flight resolves npx and gemini shims
+        shell: pwsh
+        run: |
+          node scripts/lab.mjs preflight | Tee-Object -FilePath preflight.txt
+          if (-not (Select-String -Path preflight.txt -Pattern "PASS  gemini")) { throw "gemini shim not resolved" }
+          if (-not (Select-String -Path preflight.txt -Pattern "PASS  kubernetes-mcp-server")) { throw "npx shim not resolved" }
+          if (-not (Select-String -Path preflight.txt -Pattern "PASS  node")) { throw "node check" }

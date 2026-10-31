@@ -8,3 +8,10 @@ private/
 .gemini/
 agent-reader.kubeconfig
 *.kubeconfig
+
+# Secrets
+key.txt
+*.key
+.env
+.DS_Store
+node_modules/
