@@ -65,3 +65,4 @@ jobs:
           if (-not (Select-String -Path preflight.txt -Pattern "PASS  gemini")) { throw "gemini shim not resolved" }
           if (-not (Select-String -Path preflight.txt -Pattern "PASS  kubernetes-mcp-server")) { throw "npx shim not resolved" }
           if (-not (Select-String -Path preflight.txt -Pattern "PASS  node")) { throw "node check" }
+          exit 0   # preflight itself exits 1 here (no k3d, no API key on the runner); only the checks above matter
