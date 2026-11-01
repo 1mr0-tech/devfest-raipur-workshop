@@ -59,7 +59,11 @@ function writeProfile(profile) {
   // TOML literal string (single quotes): Windows backslashes need no escaping
   writeFileSync(toml, `kubeconfig = '${kube}'\n` + readFileSync(src, 'utf8'));
   writeFileSync(join(GEMINI_DIR, 'settings.json'), JSON.stringify({
-    mcpServers: { kubernetes: { command: 'npx', args: ['-y', 'kubernetes-mcp-server@latest', '--config', toml], trust: false } },
+    mcpServers: { kubernetes: { command: 'npx', args: ['-y', 'kubernetes-mcp-server@latest', '--config', toml], trust: profile === 'readonly' } }, // read-only server: no approval clicks needed. Write profile asks every time.
+    // The MCP guardrails only matter if the agent has no other way in. Without
+    // this it happily runs kubectl through its built-in shell (or via a subagent).
+    tools: { exclude: ['run_shell_command', 'write_file', 'replace'] },
+    experimental: { enableAgents: false },
   }, null, 2) + '\n');
   console.log(`Gemini profile: ${profile}  (from ${src})`);
   console.log('Restart gemini to pick it up. Inside gemini, run /mcp to see the tools.');

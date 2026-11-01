@@ -3,6 +3,7 @@
  Same on macOS, Linux and Windows (PowerShell). Run from the repo folder.
  Lines starting with # are comments or things to type INSIDE gemini.
  More detail: README.md  |  npm run help lists every command
+ Real output of every step (to compare against): LAB-OUTPUT.md
 =====================================================================
 
 

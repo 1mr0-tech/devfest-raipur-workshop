@@ -1,0 +1,11 @@
+# The agent should diagnose from the cluster, not from the lab's source.
+# These files define the faults and the fixes.
+scripts/
+manifests/
+config/
+commands.txt
+README.md
+FACILITATOR.md
+slide-map.md
+package.json
+.github/

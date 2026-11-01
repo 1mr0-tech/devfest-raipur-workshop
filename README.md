@@ -4,6 +4,8 @@ DevFest Raipur workshop. You will run a small app on a local Kubernetes cluster 
 
 Works on **macOS, Linux and Windows**. The lab commands are the same everywhere. Only the install steps and the API-key line differ.
 
+> **Stuck or short on time?** [`LAB-OUTPUT.md`](LAB-OUTPUT.md) has the real output of every lab step, including Gemini's answers, so you can see what "working" looks like.
+
 The talk covers Google Cloud's AI-assisted SRE stack (Cloud Assist, Agent Gateway, Sandboxes, semantic governance). Those are managed services, so this lab recreates the *ideas* locally:
 
 | Cloud idea | What you use here |
@@ -94,7 +96,7 @@ Now try to make the read-only agent change something:
 ```
 Scale the web deployment to 5 replicas.
 ```
-It cannot. Run `/mcp` again: the write tools were never offered.
+It cannot. The read-only agent has no scale tool, so expect it to investigate and then print the `kubectl scale` command for *you* to run. Run `/mcp` again: the write tools were never offered, and `kubectl -n shop get deploy web` still shows 2/2.
 
 ### Lab 3: Remediate with a human in the loop (10 min)
 ```sh
@@ -134,6 +136,8 @@ See the guardrails without the model, which also works if the API is down:
 npm run mcp-check
 ```
 It starts the same MCP server Gemini uses and proves: dangerous tools are not offered, Secrets are denied, and your other clusters are unreachable (the agent gets a kubeconfig containing only `sre-lab`).
+
+In the captured run, the plain-English `GEMINI.md` rules stopped all four prompts (see [`LAB-OUTPUT.md`](LAB-OUTPUT.md)). That is the softest layer, so do not stop there: `npm run mcp-check` proves the layers that do not depend on the model.
 
 Optional stretch: `npm run rbac` creates a real read-only Kubernetes identity and proves it cannot delete.
 

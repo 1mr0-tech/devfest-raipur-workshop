@@ -55,7 +55,9 @@ spec:
           value: "postgres.shop.svc.cluster.local"
 ---
 # Report generator. MODE=light is healthy. MODE=full buffers everything in memory
-# and gets OOMKilled by its 64Mi limit (used by `make break-3`).
+# and gets OOMKilled by its 64Mi limit (used by `npm run break-3`).
+# (`tail /dev/zero` never sees a newline, so it buffers until killed. Kept out of
+# the script itself so the agent cannot read the answer from the live deployment.)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -76,7 +78,7 @@ spec:
         args:
         - |
           if [ "$MODE" = "full" ]; then
-            tail /dev/zero   # never sees a newline, so it buffers until killed
+            tail /dev/zero
           fi
           echo "report generator ready (mode=$MODE)"
           sleep 3600
